@@ -65,3 +65,77 @@ def mostrar_asignaciones(lista, asignaciones):
     """Imprime una tabla con mesa, rol, DNI y nombre."""
     for mesa, rol, dni in asignaciones:
         print(f"  {mesa} | {rol:<14} | {dni} | {nombre_por_dni(lista, dni)}")
+
+# ------------------------------------------------------------------- OPCIONES
+
+def opcion_registrar(lista):
+    print("\n--- Registrar elector ---")
+    dni = pedir_dato("DNI (8 dígitos): ", validaciones.validar_dni)
+    indice, _ = mod_electores.buscar_secuencial(lista, dni)
+    if indice != -1:
+        print("Ya existe un elector registrado con ese DNI.")
+        return
+    nombre = pedir_dato("Apellidos y nombres: ", validaciones.validar_nombre, True)
+    edad = pedir_dato("Edad: ", validaciones.validar_edad)
+    mesa = pedir_dato("Mesa (ejemplo M001): ", validaciones.validar_mesa, True)
+    print("Grado de instrucción: 1=Primaria 2=Secundaria 3=Técnica 4=Universitaria")
+    instruccion = pedir_dato("Opción: ", validaciones.validar_instruccion)
+    veces = pedir_dato("Veces que fue miembro de mesa en 5 años: ",
+                       validaciones.validar_veces)
+    observador = pedir_dato("¿Es observador acreditado? (S/N): ",
+                            validaciones.validar_si_no, True)
+
+    nuevo = mod_electores.crear_elector(dni, nombre, edad, mesa, instruccion,
+                                        veces, observador)
+    registrado, motivo = mod_electores.registrar_elector(lista, nuevo)
+    if registrado:
+        archivos.agregar_elector(RUTA_ELECTORES, nuevo)
+        print("Elector registrado y guardado en el archivo.")
+    else:
+        print("No se registró:", motivo)
+
+
+def opcion_buscar(lista, asignaciones):
+    print("\n--- Buscar elector por DNI ---")
+    if len(lista) == 0:
+        print("No hay electores registrados.")
+        return
+    dni = pedir_dato("DNI a buscar: ", validaciones.validar_dni)
+    print("Método: 1=Secuencial  2=Binaria")
+    metodo = pedir_opcion("Opción: ", ["1", "2"])
+    if metodo == "1":
+        indice, comparaciones = mod_electores.buscar_secuencial(lista, dni)
+        encontrado = lista[indice] if indice != -1 else None
+    else:
+        ordenada, _ = mod_electores.ordenar_seleccion(lista, "dni")
+        indice, comparaciones = mod_electores.buscar_binaria(ordenada, dni)
+        encontrado = ordenada[indice] if indice != -1 else None
+
+    if encontrado is None:
+        print(f"No se encontró el DNI {dni} ({comparaciones} comparaciones).")
+        return
+    print(f"Encontrado en {comparaciones} comparaciones:")
+    print(" ", mod_electores.texto_elector(encontrado))
+    roles = sorteo.buscar_asignaciones(asignaciones, dni)
+    if len(roles) == 0:
+        print("  Sin asignación todavía.")
+    for mesa, rol in roles:
+        print(f"  Asignación: {rol} en la mesa {mesa}")
+
+
+def opcion_listar(lista):
+    print("\n--- Listar electores ordenados ---")
+    if len(lista) == 0:
+        print("No hay electores registrados.")
+        return
+    print("Ordenar por: 1=DNI  2=Nombre  3=Mesa")
+    campo = {"1": "dni", "2": "nombre", "3": "mesa"}[pedir_opcion("Opción: ", ["1", "2", "3"])]
+    print("Algoritmo: 1=Burbuja  2=Selección")
+    algoritmo = pedir_opcion("Opción: ", ["1", "2"])
+    if algoritmo == "1":
+        ordenada, comparaciones = mod_electores.ordenar_burbuja(lista, campo)
+    else:
+        ordenada, comparaciones = mod_electores.ordenar_seleccion(lista, campo)
+    for e in ordenada:
+        print(" ", mod_electores.texto_elector(e))
+    print(f"Total: {len(ordenada)} electores ({comparaciones} comparaciones).")
