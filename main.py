@@ -234,3 +234,38 @@ def opcion_comparar(lista):
     print(f"Buscar el último DNI registrado ({peor}):")
     print(f"  Secuencial: {c_sec} comparaciones")
     print(f"  Binaria:    {c_bin} comparaciones")
+    
+
+# ------------------------------------------------------------------ PRINCIPAL
+
+def main():
+    lista, lineas_con_error = archivos.cargar_electores(RUTA_ELECTORES)
+    asignaciones = archivos.cargar_asignaciones(RUTA_ASIGNACIONES)
+    print(f"Se cargaron {len(lista)} electores y {len(asignaciones)} asignaciones.")
+    if lineas_con_error > 0:
+        print(f"Aviso: se omitieron {lineas_con_error} líneas dañadas del archivo.")
+
+    while True:
+        mostrar_menu()
+        opcion = pedir_opcion("Elige una opción: ", ["0", "1", "2", "3", "4", "5", "6", "7"])
+        if opcion == "1":
+            opcion_registrar(lista)
+        elif opcion == "2":
+            opcion_buscar(lista, asignaciones)
+        elif opcion == "3":
+            opcion_listar(lista)
+        elif opcion == "4":
+            asignaciones = opcion_sortear(lista, asignaciones)
+        elif opcion == "5":
+            asignaciones = opcion_observadores(lista, asignaciones)
+        elif opcion == "6":
+            opcion_ver_mesa(lista, asignaciones)
+        elif opcion == "7":
+            opcion_comparar(lista)
+        else:
+            print("Hasta pronto. Los datos ya están guardados en la carpeta data/.")
+            break
+
+
+if __name__ == "__main__":
+    main()
