@@ -139,3 +139,98 @@ def opcion_listar(lista):
     for e in ordenada:
         print(" ", mod_electores.texto_elector(e))
     print(f"Total: {len(ordenada)} electores ({comparaciones} comparaciones).")
+    
+
+def nueva_semilla():
+    """Crea una semilla y el generador aleatorio que la usa."""
+    semilla = random.randrange(1, 1000000000)
+    return semilla, random.Random(semilla)
+
+
+def anotar_sorteo(alcance, semilla):
+    fecha = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    archivos.registrar_sorteo(RUTA_REGISTRO, fecha, alcance, semilla)
+    print(f"Semilla del sorteo: {semilla} (anotada en el registro de auditoría).")
+
+
+def opcion_sortear(lista, asignaciones):
+    print("\n--- Sortear miembros de mesa ---")
+    if len(lista) == 0:
+        print("No hay electores registrados.")
+        return asignaciones
+    print("1=Una mesa  2=Todas las mesas")
+    alcance = pedir_opcion("Opción: ", ["1", "2"])
+    semilla, rng = nueva_semilla()
+    if alcance == "1":
+        mesa = pedir_dato("Mesa (ejemplo M001): ", validaciones.validar_mesa, True)
+        nuevas, mensaje = sorteo.sortear_mesa(lista, mesa, rng)
+        if mensaje != "":
+            print("No se pudo sortear:", mensaje)
+            return asignaciones
+        asignaciones = sorteo.reemplazar_asignaciones(asignaciones, nuevas,
+                                                      mesas=[mesa])
+        etiqueta = f"MIEMBROS {mesa}"
+    else:
+        nuevas, problemas = sorteo.sortear_todas_las_mesas(lista, rng)
+        for p in problemas:
+            print("Aviso:", p)
+        if len(nuevas) == 0:
+            print("No se pudo sortear ninguna mesa.")
+            return asignaciones
+        mesas_sorteadas = []
+        for a in nuevas:
+            if a[0] not in mesas_sorteadas:
+                mesas_sorteadas.append(a[0])
+        asignaciones = sorteo.reemplazar_asignaciones(asignaciones, nuevas,
+                                                      mesas=mesas_sorteadas)
+        etiqueta = "MIEMBROS TODAS"
+    archivos.guardar_asignaciones(RUTA_ASIGNACIONES, asignaciones)
+    anotar_sorteo(etiqueta, semilla)
+    mostrar_asignaciones(lista, nuevas)
+    return asignaciones
+
+
+def opcion_observadores(lista, asignaciones):
+    print("\n--- Asignar observadores ---")
+    semilla, rng = nueva_semilla()
+    nuevas, mensaje = sorteo.asignar_observadores(lista, rng)
+    if mensaje != "":
+        print("No se pudo asignar:", mensaje)
+        return asignaciones
+    asignaciones = sorteo.reemplazar_asignaciones(asignaciones, nuevas,
+                                                  solo_observadores=True)
+    archivos.guardar_asignaciones(RUTA_ASIGNACIONES, asignaciones)
+    anotar_sorteo("OBSERVADORES", semilla)
+    mostrar_asignaciones(lista, nuevas)
+    return asignaciones
+
+
+def opcion_ver_mesa(lista, asignaciones):
+    print("\n--- Asignaciones de una mesa ---")
+    mesa = pedir_dato("Mesa (ejemplo M001): ", validaciones.validar_mesa, True)
+    de_la_mesa = []
+    for a in asignaciones:
+        if a[0] == mesa:
+            de_la_mesa.append(a)
+    if len(de_la_mesa) == 0:
+        print("Esa mesa no tiene asignaciones todavía.")
+        return
+    mostrar_asignaciones(lista, de_la_mesa)
+
+
+def opcion_comparar(lista):
+    print("\n--- Comparación de algoritmos ---")
+    if len(lista) < 2:
+        print("Se necesitan al menos 2 electores registrados.")
+        return
+    _, c_burbuja = mod_electores.ordenar_burbuja(lista, "dni")
+    ordenada, c_seleccion = mod_electores.ordenar_seleccion(lista, "dni")
+    print(f"Ordenar {len(lista)} electores por DNI:")
+    print(f"  Burbuja:   {c_burbuja} comparaciones")
+    print(f"  Selección: {c_seleccion} comparaciones")
+    peor = lista[-1]["dni"]
+    _, c_sec = mod_electores.buscar_secuencial(lista, peor)
+    _, c_bin = mod_electores.buscar_binaria(ordenada, peor)
+    print(f"Buscar el último DNI registrado ({peor}):")
+    print(f"  Secuencial: {c_sec} comparaciones")
+    print(f"  Binaria:    {c_bin} comparaciones")
