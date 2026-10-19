@@ -55,4 +55,10 @@ Grado de instrucción: 1 Primaria, 2 Secundaria, 3 Técnica, 4 Universitaria.
 
 ## Integrantes
 
-Completar con los nombres del grupo y el rol de cada uno.
+| Integrante | Rol | Módulo |
+|---|---|---|
+| Mathew Arom Aguilar Ramos | Menú principal y gestión del repositorio | main.py |
+| Alvaro Ramiro Higinio Rios Aponte | Validación de datos | src/validaciones.py |
+| Favio Adriano Camones Estrada | Archivos de texto y datos de prueba | src/archivos.py, data/ |
+| Luis Enrique Lazaro Yancce | Registro, búsqueda y ordenamiento | src/electores.py |
+| Jerson Yair Marquez Valverde | Sorteo y asignación de observadores | src/sorteo.py |
